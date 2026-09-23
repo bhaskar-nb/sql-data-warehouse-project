@@ -1,89 +1,78 @@
 # SQL Data Warehouse & Analytics Project
 
-A portfolio project that demonstrates the end-to-end development of a **SQL Server data warehouse**, from raw CRM/ERP source data through ingestion, transformation, quality validation, and business-ready analytical models.
+An end-to-end **SQL Server data warehouse project** that integrates CRM and ERP source data, transforms it through Bronze, Silver, and Gold layers, validates data quality, and produces business-ready analytical models.
 
-The project follows a **Medallion Architecture** with Bronze, Silver, and Gold layers and uses a **star-schema-oriented analytical model** in the Gold layer.
+The project demonstrates how raw operational data can be transformed into a structured analytics platform using:
 
----
+- **ETL / ELT workflows** with stored procedures
+- **Bronze → Silver → Gold** architecture
+- Data cleaning and standardization
+- Duplicate handling and historical data logic
+- Data-quality validation
+- Dimensional modeling and star-schema design
+- Customer, product, and sales fact modeling
+- Reusable Gold-layer views for analytics
 
-## Project Overview
+## What This Project Does
 
-This project simulates a real-world analytics data platform that integrates data from multiple source systems:
+The warehouse combines customer, product, category, location, and sales data from CRM and ERP source files.
 
-- **CRM data:** customers, products, and sales transactions
-- **ERP data:** customer attributes, locations, and product categories
-- **SQL Server data warehouse:** Bronze, Silver, and Gold layers
-- **Analytical model:** customer and product dimensions plus a sales fact table
-
-The goal is to transform raw operational data into clean, standardized, and business-ready datasets that can support reporting and analytics.
-
----
-
-## Architecture
-
-The warehouse is organized into three layers:
+The pipeline follows:
 
 ```text
-CRM / ERP CSV Sources
-        |
-        v
-+-------------------+
-|   Bronze Layer    |
-| Raw / minimally   |
-| transformed data  |
-+-------------------+
-        |
-        v
-+-------------------+
-|   Silver Layer    |
-| Cleaned, validated|
-| and standardized  |
-+-------------------+
-        |
-        v
-+-------------------+
-|    Gold Layer     |
-| Business-ready    |
-| dimensions + fact |
-+-------------------+
+CRM / ERP Sources
+        ↓
+Bronze — Raw Data
+        ↓
+Silver — Cleaned & Standardized Data
+        ↓
+Gold — Business-Ready Dimensions & Fact
+        ↓
+Analytics / Reporting
 ```
 
-### Bronze Layer
-
-Stores raw source data with minimal transformation.
-
-Main responsibilities:
-- Create raw warehouse tables
-- Load CSV files using `BULK INSERT`
-- Refresh tables before each load
-
-### Silver Layer
-
-Cleans, standardizes, and transforms Bronze data.
-
-Examples of transformations include:
-- Trimming unwanted spaces
-- Standardizing gender and marital-status values
-- Handling missing product costs
-- Cleaning customer and location keys
-- Converting integer date representations into SQL dates
-- Validating and correcting sales values
-- Removing duplicate customer records using `ROW_NUMBER()`
-- Deriving product validity periods using `LEAD()`
-
-### Gold Layer
-
-Provides business-ready analytical views based on the cleaned Silver data.
-
-The Gold layer contains:
+The final Gold layer provides:
 
 - `gold.dim_customers`
 - `gold.dim_products`
 - `gold.fact_sales`
 
-These objects form a dimensional model suitable for reporting and analytics.
+These models support analysis of sales, customers, products, countries, and other business dimensions.
 
----
+## Architecture
+
+### Bronze Layer
+
+Stores raw source data with minimal transformation.
+
+- Creates raw warehouse tables
+- Loads CRM and ERP CSV files using `BULK INSERT`
+- Refreshes source tables before loading
+
+### Silver Layer
+
+Cleans, standardizes, and transforms Bronze data.
+
+Examples include:
+
+- Trimming text fields
+- Standardizing gender and marital-status values
+- Handling missing product costs
+- Cleaning customer and location keys
+- Converting integer date values into SQL dates
+- Validating and correcting sales values
+- Removing duplicate customer records with `ROW_NUMBER()`
+- Deriving product validity periods with `LEAD()`
+
+### Gold Layer
+
+Creates business-ready analytical views:
+
+- `gold.dim_customers`
+- `gold.dim_products`
+- `gold.fact_sales`
+
+These views form a dimensional model designed for reporting and analysis.
 
 ## Data Sources
 
@@ -93,7 +82,7 @@ These objects form a dimensional model suitable for reporting and analytics.
 |---|---|
 | `cust_info.csv` | Customer master data |
 | `prd_info.csv` | Product information and product history |
-| `sales_details.csv` | Sales transaction details |
+| `sales_details.csv` | Sales transaction data |
 
 ### ERP
 
@@ -103,117 +92,74 @@ These objects form a dimensional model suitable for reporting and analytics.
 | `LOC_A101.csv` | Customer country/location |
 | `PX_CAT_G1V2.csv` | Product categories and subcategories |
 
----
-
 ## Gold Data Model
 
-### Customer Dimension
+### `gold.dim_customers`
 
-`gold.dim_customers`
+Customer attributes including customer key, ID, name, country, marital status, gender, birthdate, and creation date.
 
-Contains:
-- Customer surrogate key
-- Customer ID and number
-- Name
-- Country
-- Marital status
-- Gender
-- Birthdate
-- Customer creation date
+### `gold.dim_products`
 
-### Product Dimension
-
-`gold.dim_products`
-
-Contains:
-- Product surrogate key
-- Product ID and number
-- Product name
-- Category and subcategory
-- Maintenance classification
-- Product cost
-- Product line
-- Product start date
+Product attributes including product key, product ID, product name, category, subcategory, cost, product line, and start date.
 
 Historical product versions are filtered so the analytical view represents the current product record.
 
-### Sales Fact
+### `gold.fact_sales`
 
-`gold.fact_sales`
+Transaction-level measures including order number, customer key, product key, order date, shipping date, due date, sales amount, quantity, and price.
 
-Contains:
-- Order number
-- Customer key
-- Product key
-- Order date
-- Ship date
-- Due date
-- Sales amount
-- Quantity
-- Price
-
----
-
-## SQL Concepts Demonstrated
-
-This project demonstrates practical SQL Server skills, including:
+## SQL Skills Demonstrated
 
 - Database and schema creation
-- DDL
-- Tables and views
+- DDL and table design
 - Stored procedures
 - `BULK INSERT`
 - `TRUNCATE TABLE`
+- `JOIN` operations
 - `CASE`
-- `TRIM` and `REPLACE`
-- `ISNULL`
-- `CAST` and date conversion
+- `TRIM`, `REPLACE`, and `ISNULL`
+- Type and date conversion
 - `ROW_NUMBER()`
 - `LEAD()`
 - Window functions
-- CTE-style analytical thinking
-- Joins
 - Data standardization
 - Duplicate handling
 - Data-quality validation
 - Fact and dimension modeling
 - Star-schema design
 - ETL / ELT workflow design
-- Error handling with `TRY...CATCH`
+- `TRY...CATCH` error handling
 
----
+## Data Quality Checks
 
-## Data Quality Framework
+### Silver layer
 
-Quality checks are included for both Silver and Gold layers.
+The project checks for:
 
-### Silver checks
-
-The project validates:
-- Null and duplicate business keys
-- Leading/trailing spaces
-- Standardized categorical values
+- Null or duplicate business keys
+- Unwanted spaces
+- Inconsistent categorical values
 - Missing or negative product costs
 - Invalid date ranges
-- Invalid order/ship/due-date relationships
+- Invalid order, shipping, and due-date relationships
 - Sales consistency: `Sales = Quantity × Price`
 - Invalid birth dates
 - Country standardization
 
-### Gold checks
+### Gold layer
 
-The project validates:
-- Uniqueness of customer surrogate keys
-- Uniqueness of product surrogate keys
-- Connectivity between the sales fact and its customer/product dimensions
+The project checks for:
 
-Scripts:
+- Unique customer surrogate keys
+- Unique product surrogate keys
+- Connectivity between the fact table and customer/product dimensions
 
-`tests/quality_checks_silver.sql`
+Quality-check scripts:
 
-`tests/quality_checks_gold.sql`
-
----
+```text
+tests/quality_checks_silver.sql
+tests/quality_checks_gold.sql
+```
 
 ## Project Structure
 
@@ -252,27 +198,23 @@ sql-data-warehouse-project/
 └── LICENSE
 ```
 
----
-
 ## How to Run
 
-### 1. Prerequisites
-
-Use:
+### Prerequisites
 
 - Microsoft SQL Server
 - SQL Server Management Studio (SSMS)
 
-The scripts use SQL Server-specific features such as `BULK INSERT`, stored procedures, schemas, and `TRY...CATCH`.
+The project uses SQL Server-specific features such as `BULK INSERT`, stored procedures, schemas, and `TRY...CATCH`.
 
-### 2. Clone the repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/bhaskar-nb/sql-data-warehouse-project.git
 cd sql-data-warehouse-project
 ```
 
-### 3. Create the warehouse
+### 2. Create the warehouse
 
 Run:
 
@@ -282,9 +224,9 @@ scripts/init_database.sql
 
 This creates the `Datawarehouse` database and the `bronze`, `silver`, and `gold` schemas.
 
-**Warning:** the initialization script drops and recreates the database if it already exists.
+> **Warning:** The initialization script drops and recreates the database if it already exists.
 
-### 4. Create Bronze tables
+### 3. Create Bronze tables
 
 Run:
 
@@ -292,17 +234,15 @@ Run:
 scripts/bronze/ddl_bronze.sql
 ```
 
-### 5. Configure the CSV paths
+### 4. Configure CSV paths
 
-Before executing the Bronze loading procedure, update the file paths in:
+Before loading the Bronze layer, update the machine-specific CSV paths in:
 
 ```text
 scripts/bronze/proc_load_bronze.sql
 ```
 
-The procedure currently contains machine-specific Windows paths. Replace them with the actual location of the repository on your SQL Server environment.
-
-### 6. Load Bronze data
+### 5. Load Bronze data
 
 Create the procedure and execute:
 
@@ -310,7 +250,7 @@ Create the procedure and execute:
 EXEC bronze.load_bronze;
 ```
 
-### 7. Create Silver tables
+### 6. Create Silver tables
 
 Run:
 
@@ -318,7 +258,7 @@ Run:
 scripts/silver/ddl_silver.sql
 ```
 
-### 8. Load and transform Silver data
+### 7. Load and transform Silver data
 
 Create and execute:
 
@@ -326,7 +266,7 @@ Create and execute:
 EXEC silver.load_silver;
 ```
 
-### 9. Create Gold views
+### 8. Create Gold views
 
 Run:
 
@@ -334,7 +274,7 @@ Run:
 scripts/gold/ddl.gold.sql
 ```
 
-### 10. Run quality checks
+### 9. Run quality checks
 
 Execute:
 
@@ -343,13 +283,9 @@ tests/quality_checks_silver.sql
 tests/quality_checks_gold.sql
 ```
 
----
-
 ## Example Analytical Queries
 
-Once the Gold layer is created, the views can be queried for analytics.
-
-### Total sales
+### Total Sales
 
 ```sql
 SELECT
@@ -357,7 +293,7 @@ SELECT
 FROM gold.fact_sales;
 ```
 
-### Sales by product
+### Sales by Product Category
 
 ```sql
 SELECT
@@ -374,7 +310,7 @@ ORDER BY
     total_sales DESC;
 ```
 
-### Sales by country
+### Sales by Country
 
 ```sql
 SELECT
@@ -389,7 +325,7 @@ ORDER BY
     total_sales DESC;
 ```
 
-### Customer sales contribution
+### Customer Sales Contribution
 
 ```sql
 SELECT
@@ -408,9 +344,7 @@ ORDER BY
     total_sales DESC;
 ```
 
----
-
-## Key Engineering and Analytics Workflow
+## End-to-End Workflow
 
 ```text
 Source CSV Files
@@ -434,25 +368,20 @@ Gold Quality Checks
 Analytics / Reporting
 ```
 
----
-
 ## What This Project Demonstrates
 
-This project demonstrates the ability to work beyond isolated SQL queries and build a structured analytics data pipeline.
+This project demonstrates how SQL can be used beyond isolated queries to build a structured analytics data pipeline.
 
-Key capabilities demonstrated:
+Key capabilities include:
 
-- Designing a layered data warehouse
-- Integrating CRM and ERP sources
-- Building repeatable SQL loading procedures
+- Integrating CRM and ERP source data
+- Building repeatable loading procedures
 - Applying data cleaning and standardization rules
 - Using window functions for deduplication and historical logic
 - Designing analytical dimensions and fact tables
 - Implementing data-quality checks
 - Creating reusable business-ready views
-- Documenting an end-to-end SQL project
-
----
+- Preparing a warehouse for downstream reporting and analysis
 
 ## Technologies
 
@@ -460,10 +389,8 @@ Key capabilities demonstrated:
 - **IDE:** SQL Server Management Studio (SSMS)
 - **Language:** T-SQL
 - **Data Format:** CSV
-- **Architecture:** Medallion Architecture
+- **Architecture:** Bronze / Silver / Gold (Medallion-style)
 - **Data Model:** Dimensional / Star Schema
-
----
 
 ## Author
 
@@ -471,10 +398,8 @@ Key capabilities demonstrated:
 
 Computer Science Engineering Graduate | Aspiring Data Analyst
 
-Skills demonstrated in this project:
+Skills demonstrated:
 `SQL` • `T-SQL` • `SQL Server` • `Data Warehousing` • `ETL` • `Data Cleaning` • `Data Modeling` • `Data Quality` • `Window Functions`
-
----
 
 ## License
 
